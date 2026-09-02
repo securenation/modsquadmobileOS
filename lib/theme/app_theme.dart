@@ -44,6 +44,23 @@ ThemeData buildAppTheme() {
         borderSide: const BorderSide(color: AppColors.destructive, width: 1.5),
       ),
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.card,
+      indicatorColor: AppColors.cyan.withValues(alpha: 0.18),
+      surfaceTintColor: Colors.transparent,
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return TextStyle(
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          color: selected ? AppColors.cyan : AppColors.muted,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(color: selected ? AppColors.cyan : AppColors.muted, size: 22);
+      }),
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.cyan,

@@ -9,7 +9,7 @@ flutter pub get
 flutter run
 ```
 
-Sign in with a seeded demo account, for example `priya.natarajan@modsquad-demo.test`. After login the app opens **Mission Control** for the most in-flight campaign (same data as the web app).
+Sign in with a seeded demo account, for example `priya.natarajan@modsquad-demo.test`. After login the app opens **Mission Control**. Use the bottom navigation to switch to **Campaigns** (tap a card for the overview) and **Startups**.
 
 ## Config
 

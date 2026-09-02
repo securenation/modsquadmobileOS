@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:modsquad_meetings/app.dart';
 import 'package:modsquad_meetings/auth/supabase_auth_repository.dart';
+import 'package:modsquad_meetings/campaigns/supabase_campaigns_repository.dart';
 import 'package:modsquad_meetings/config/supabase_config.dart';
 import 'package:modsquad_meetings/mission_control/supabase_mission_control_repository.dart';
+import 'package:modsquad_meetings/startups/supabase_startups_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -16,6 +18,8 @@ Future<void> main() async {
     ModSquadApp(
       auth: SupabaseAuthRepository(client),
       missionControl: SupabaseMissionControlRepository(client),
+      campaigns: SupabaseCampaignsRepository(client),
+      startups: SupabaseStartupsRepository(client),
     ),
   );
 }

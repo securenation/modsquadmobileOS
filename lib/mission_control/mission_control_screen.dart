@@ -2,19 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:modsquad_meetings/auth/auth_repository.dart';
 import 'package:modsquad_meetings/mission_control/mission_control_repository.dart';
 import 'package:modsquad_meetings/mission_control/models.dart';
+import 'package:modsquad_meetings/shared/campaign_status_chip.dart';
+import 'package:modsquad_meetings/shared/message_state.dart';
 import 'package:modsquad_meetings/theme/app_colors.dart';
-
-const _statusLabels = {
-  'draft': 'Draft',
-  'planning': 'Planning',
-  'targeting': 'Targeting',
-  'outreach': 'Outreach',
-  'scheduling': 'Scheduling',
-  'live': 'Live',
-  'follow_up': 'Follow-up',
-  'completed': 'Completed',
-  'archived': 'Archived',
-};
 
 class MissionControlScreen extends StatefulWidget {
   const MissionControlScreen({
@@ -78,7 +68,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
             return const Center(child: CircularProgressIndicator(color: AppColors.cyan));
           }
           if (snapshot.hasError) {
-            return _MessageState(
+            return MessageState(
               title: 'Could not load Mission Control',
               detail: snapshot.error.toString(),
               actionLabel: 'Try again',
@@ -87,7 +77,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
           }
           final data = snapshot.data;
           if (data == null) {
-            return const _MessageState(
+            return const MessageState(
               title: 'No campaigns yet',
               detail: 'Create a campaign on the web app to start bringing in targets, introductions, and meetings.',
             );
@@ -140,7 +130,7 @@ class _CampaignHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _StatusChip(status: data.campaignStatus),
+            CampaignStatusChip(status: data.campaignStatus),
           ],
         ),
         if (parts.isNotEmpty) ...[
@@ -155,33 +145,6 @@ class _CampaignHeader extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final live = status == 'live';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: live ? AppColors.success.withValues(alpha: 0.15) : AppColors.card,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: live ? AppColors.success : AppColors.border),
-      ),
-      child: Text(
-        _statusLabels[status] ?? status,
-        style: TextStyle(
-          color: live ? AppColors.success : AppColors.muted,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }
@@ -509,37 +472,4 @@ String _formatTimestamp(DateTime value) {
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
   return '${local.year}-$month-$day $hour:$minute';
-}
-
-class _MessageState extends StatelessWidget {
-  const _MessageState({
-    required this.title,
-    required this.detail,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final String title;
-  final String detail;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          Text(detail, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 14, height: 1.4)),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 20),
-            FilledButton(onPressed: onAction, child: Text(actionLabel!)),
-          ],
-        ],
-      ),
-    );
-  }
 }
