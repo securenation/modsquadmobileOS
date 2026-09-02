@@ -9,7 +9,7 @@ flutter pub get
 flutter run
 ```
 
-Sign in with a seeded demo account, for example `priya.natarajan@modsquad-demo.test`. After a successful login you land on a temporary signed-in screen until Mission Control is built.
+Sign in with a seeded demo account, for example `priya.natarajan@modsquad-demo.test`. After login the app opens **Mission Control** for the most in-flight campaign (same data as the web app).
 
 ## Config
 
