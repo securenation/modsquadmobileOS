@@ -21,7 +21,7 @@ void main() {
         home: SignedInShell(
           auth: FakeAuthRepository(),
           missionControl: FakeMissionControlRepository(snapshot: sampleSnapshot()),
-          campaigns: FakeCampaignsRepository(campaigns: [sampleCampaign()]),
+          campaigns: FakeCampaignsRepository(campaigns: [sampleCampaign()], workspace: sampleWorkspace),
           startups: FakeStartupsRepository(startups: const [sampleStartup]),
         ),
       ),

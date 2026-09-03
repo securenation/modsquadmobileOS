@@ -97,7 +97,10 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (context) => CampaignDetailScreen(campaign: campaign),
+                        builder: (context) => CampaignDetailScreen(
+                          campaign: campaign,
+                          repository: widget.repository,
+                        ),
                       ),
                     );
                   },

@@ -19,5 +19,11 @@ const sampleStartup = Startup(
   name: 'Dante Security',
   shortDescription: 'Identity for the enterprise.',
   website: 'https://dante.example',
+  demoUrl: 'https://demo.dante.example',
+  pitchDeckUrl: null,
+  elevatorPitch: 'Stop identity attacks before they start.',
+  idealCustomerProfile: 'Security teams at large enterprises.',
+  meetingObjectives: ['enterprise_sales', 'design_partner'],
+  targetPersonas: ['CISO', 'VP Engineering'],
   isPlaceholderContent: false,
 );

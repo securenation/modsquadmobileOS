@@ -9,7 +9,9 @@ flutter pub get
 flutter run
 ```
 
-Sign in with a seeded demo account, for example `priya.natarajan@modsquad-demo.test`. After login the app opens **Mission Control**. Use the bottom navigation to switch to **Campaigns** (tap a card for the overview) and **Startups**.
+Sign in with a seeded demo account, for example `priya.natarajan@modsquad-demo.test`. After login the app opens **Mission Control**. Use the bottom navigation to switch to **Campaigns** and **Startups**.
+
+Open a campaign for Overview, Pipeline (targets, companies, intros, outreach, scoring), Calendar (scheduling and meetings), and Results (tasks, opportunities, reports). Tap a startup for its profile.
 
 ## Config
 

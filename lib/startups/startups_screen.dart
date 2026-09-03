@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:modsquad_meetings/auth/auth_repository.dart';
 import 'package:modsquad_meetings/shared/message_state.dart';
+import 'package:modsquad_meetings/startups/startup_detail_screen.dart';
 import 'package:modsquad_meetings/startups/startups_repository.dart';
 import 'package:modsquad_meetings/theme/app_colors.dart';
 
@@ -88,7 +89,19 @@ class _StartupsScreenState extends State<StartupsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               itemCount: startups.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _StartupCard(startup: startups[index]),
+              itemBuilder: (context, index) {
+                final startup = startups[index];
+                return _StartupCard(
+                  startup: startup,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => StartupDetailScreen(startup: startup),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           );
         },
@@ -98,56 +111,64 @@ class _StartupsScreenState extends State<StartupsScreen> {
 }
 
 class _StartupCard extends StatelessWidget {
-  const _StartupCard({required this.startup});
+  const _StartupCard({required this.startup, required this.onTap});
 
   final Startup startup;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.card,
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    startup.name,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        startup.name,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    if (startup.isPlaceholderContent)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Text(
+                          'Placeholder',
+                          style: TextStyle(color: AppColors.muted, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                  ],
                 ),
-                if (startup.isPlaceholderContent)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Text(
-                      'Placeholder',
-                      style: TextStyle(color: AppColors.muted, fontSize: 11, fontWeight: FontWeight.w600),
-                    ),
-                  ),
+                const SizedBox(height: 6),
+                Text(
+                  startup.shortDescription ?? 'No description yet',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  startup.website ?? 'No website on file',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              startup.shortDescription ?? 'No description yet',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              startup.website ?? 'No website on file',
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'package:modsquad_meetings/campaigns/workspace_models.dart';
+
 class Campaign {
   const Campaign({
     required this.id,
@@ -36,4 +38,5 @@ class Campaign {
 
 abstract class CampaignsRepository {
   Future<List<Campaign>> listCampaigns();
+  Future<CampaignWorkspace> loadWorkspace(String campaignId);
 }
