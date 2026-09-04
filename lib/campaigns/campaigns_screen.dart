@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:modsquad_meetings/auth/auth_repository.dart';
+import 'package:modsquad_meetings/auth/signed_in_profile.dart';
 import 'package:modsquad_meetings/campaigns/campaign_detail_screen.dart';
 import 'package:modsquad_meetings/campaigns/campaigns_repository.dart';
+import 'package:modsquad_meetings/campaigns/new_campaign_screen.dart';
+import 'package:modsquad_meetings/layout/page_app_bar.dart';
 import 'package:modsquad_meetings/shared/campaign_status_chip.dart';
 import 'package:modsquad_meetings/shared/message_state.dart';
+import 'package:modsquad_meetings/startups/startups_repository.dart';
 import 'package:modsquad_meetings/theme/app_colors.dart';
 
 class CampaignsScreen extends StatefulWidget {
   const CampaignsScreen({
     super.key,
-    required this.auth,
     required this.repository,
+    this.startups,
+    this.profile,
   });
 
-  final AuthRepository auth;
   final CampaignsRepository repository;
+  final StartupsRepository? startups;
+  final SignedInProfile? profile;
 
   @override
   State<CampaignsScreen> createState() => _CampaignsScreenState();
@@ -39,26 +44,41 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = widget.profile?.isAdmin == true && widget.startups != null && widget.profile != null;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.ink,
-        foregroundColor: AppColors.foreground,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Campaigns', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+      appBar: PageAppBar(
+        title: 'Campaigns',
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.muted),
-            color: AppColors.card,
-            onSelected: (value) {
-              if (value == 'sign-out') widget.auth.signOut();
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'sign-out',
-                child: Text(widget.auth.currentEmail == null ? 'Sign out' : 'Sign out · ${widget.auth.currentEmail}'),
-              ),
-            ],
-          ),
+          if (isAdmin)
+            IconButton(
+              tooltip: 'New campaign',
+              onPressed: () async {
+                final created = await Navigator.of(context).push<Campaign>(
+                  MaterialPageRoute(
+                    builder: (context) => NewCampaignScreen(
+                      repository: widget.repository,
+                      startups: widget.startups!,
+                      profile: widget.profile!,
+                    ),
+                  ),
+                );
+                if (created != null) {
+                  await _reload();
+                  if (!context.mounted) return;
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => CampaignDetailScreen(
+                        campaign: created,
+                        repository: widget.repository,
+                        profile: widget.profile,
+                      ),
+                    ),
+                  );
+                  await _reload();
+                }
+              },
+              icon: const Icon(Icons.add, color: AppColors.cyan),
+            ),
         ],
       ),
       body: FutureBuilder<List<Campaign>>(
@@ -87,7 +107,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
             backgroundColor: AppColors.card,
             onRefresh: _reload,
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
               itemCount: campaigns.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
@@ -100,6 +120,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                         builder: (context) => CampaignDetailScreen(
                           campaign: campaign,
                           repository: widget.repository,
+                          profile: widget.profile,
                         ),
                       ),
                     );

@@ -1,3 +1,5 @@
+import 'package:modsquad_meetings/auth/signed_in_profile.dart';
+
 class SignInFailure implements Exception {
   const SignInFailure(this.message);
 
@@ -14,4 +16,5 @@ abstract class AuthRepository {
 
   Future<void> signIn({required String email, required String password});
   Future<void> signOut();
+  Future<SignedInProfile> loadProfile();
 }

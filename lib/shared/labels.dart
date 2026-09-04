@@ -79,6 +79,36 @@ const taskPriorityLabels = {
   'urgent': 'Urgent',
 };
 
+const orgRoleLabels = {
+  'mod_squad_admin': 'Mod Squad Admin',
+  'dante_team_member': 'Dante Team',
+  'advisor': 'Advisor',
+};
+
+const meetingObjectiveLabels = {
+  'enterprise_sales': 'Enterprise sales',
+  'design_partner': 'Design partner',
+  'product_feedback': 'Product feedback',
+  'strategic_partnership': 'Strategic partnership',
+  'channel_reseller': 'Channel / reseller',
+  'investor_conversation': 'Investor conversation',
+  'advisor_recruitment': 'Advisor recruitment',
+  'industry_relationship': 'Industry relationship',
+};
+
+const meetingOutcomeTypeLabels = {
+  'sales_opportunity': 'Sales opportunity',
+  'design_partner_opportunity': 'Design partner opportunity',
+  'product_feedback_session': 'Product feedback session',
+  'strategic_partnership': 'Strategic partnership',
+  'channel_opportunity': 'Channel opportunity',
+  'investor_follow_up': 'Investor follow-up',
+  'advisor_opportunity': 'Advisor opportunity',
+  'nurture': 'Nurture — stay in touch',
+  'not_a_fit': 'Not a fit',
+  'no_next_step': 'No next step decided',
+};
+
 const opportunityStageLabels = {
   'identified': 'Identified',
   'discovery': 'Discovery',

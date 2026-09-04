@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:modsquad_meetings/auth/signed_in_profile.dart';
+import 'package:modsquad_meetings/campaigns/add_target_screen.dart';
+import 'package:modsquad_meetings/campaigns/availability_form_screen.dart';
 import 'package:modsquad_meetings/campaigns/campaigns_repository.dart';
+import 'package:modsquad_meetings/campaigns/intro_form_screen.dart';
+import 'package:modsquad_meetings/campaigns/outcome_screen.dart';
 import 'package:modsquad_meetings/campaigns/reports.dart';
+import 'package:modsquad_meetings/campaigns/task_form_screen.dart';
 import 'package:modsquad_meetings/campaigns/workspace_models.dart';
 import 'package:modsquad_meetings/shared/campaign_status_chip.dart';
 import 'package:modsquad_meetings/shared/entity_ui.dart';
@@ -16,10 +22,12 @@ class CampaignDetailScreen extends StatefulWidget {
     super.key,
     required this.campaign,
     required this.repository,
+    this.profile,
   });
 
   final Campaign campaign;
   final CampaignsRepository repository;
+  final SignedInProfile? profile;
 
   @override
   State<CampaignDetailScreen> createState() => _CampaignDetailScreenState();
@@ -32,6 +40,13 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
   void initState() {
     super.initState();
     _future = widget.repository.loadWorkspace(widget.campaign.id);
+  }
+
+  void _reload() {
+    final next = widget.repository.loadWorkspace(widget.campaign.id);
+    setState(() {
+      _future = next;
+    });
   }
 
   @override
@@ -69,21 +84,34 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                 title: 'Could not load campaign',
                 detail: snapshot.error.toString(),
                 actionLabel: 'Try again',
-                onAction: () {
-                  final next = widget.repository.loadWorkspace(widget.campaign.id);
-                  setState(() {
-                    _future = next;
-                  });
-                },
+                onAction: _reload,
               );
             }
             final workspace = snapshot.data ?? emptyWorkspace;
             return TabBarView(
               children: [
                 _OverviewTab(campaign: widget.campaign),
-                _PipelineTab(workspace: workspace),
-                _CalendarTab(workspace: workspace),
-                _ResultsTab(workspace: workspace),
+                _PipelineTab(
+                  campaign: widget.campaign,
+                  workspace: workspace,
+                  repository: widget.repository,
+                  profile: widget.profile,
+                  onChanged: _reload,
+                ),
+                _CalendarTab(
+                  campaign: widget.campaign,
+                  workspace: workspace,
+                  repository: widget.repository,
+                  profile: widget.profile,
+                  onChanged: _reload,
+                ),
+                _ResultsTab(
+                  campaign: widget.campaign,
+                  workspace: workspace,
+                  repository: widget.repository,
+                  profile: widget.profile,
+                  onChanged: _reload,
+                ),
               ],
             );
           },
@@ -154,9 +182,19 @@ class _OverviewTab extends StatelessWidget {
 }
 
 class _PipelineTab extends StatelessWidget {
-  const _PipelineTab({required this.workspace});
+  const _PipelineTab({
+    required this.campaign,
+    required this.workspace,
+    required this.repository,
+    required this.profile,
+    required this.onChanged,
+  });
 
+  final Campaign campaign;
   final CampaignWorkspace workspace;
+  final CampaignsRepository repository;
+  final SignedInProfile? profile;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +221,21 @@ class _PipelineTab extends StatelessWidget {
               children: [
                 _ListPane(
                   empty: 'No targets in this campaign yet.',
+                  actionLabel: profile?.isAdmin == true ? 'Add target' : null,
+                  onAction: profile?.isAdmin == true
+                      ? () async {
+                          final saved = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (context) => AddTargetScreen(
+                                campaignId: campaign.id,
+                                repository: repository,
+                                profile: profile!,
+                              ),
+                            ),
+                          );
+                          if (saved == true) onChanged();
+                        }
+                      : null,
                   children: [
                     for (final target in workspace.targets)
                       EntityRow(
@@ -191,6 +244,7 @@ class _PipelineTab extends StatelessWidget {
                           if (target.companyName != null) target.companyName!,
                           if (target.jobTitle != null) target.jobTitle!,
                           if (target.score != null) 'score ${target.score}',
+                          if (target.ownerName != null) target.ownerName!,
                         ].join(' · '),
                         trailing: StatusChip(label: labelFor(targetStatusLabels, target.status)),
                         onTap: () => _open(context, target.fullName, [
@@ -203,9 +257,41 @@ class _PipelineTab extends StatelessWidget {
                           ('Phone', target.phone ?? 'Not set'),
                           ('LinkedIn', target.linkedinUrl ?? 'Not set'),
                           ('City', target.city ?? 'Not set'),
+                          ('Owner', target.ownerName ?? 'Unassigned'),
                           ('Do not contact', target.doNotContact ? 'Yes' : 'No'),
                           ('Why this score', target.scoreExplanation ?? 'Not set'),
                           ('Tags', target.tags.isEmpty ? 'None' : target.tags.join(', ')),
+                        ], actions: [
+                          if (profile?.isAdmin == true) ...[
+                            FilledButton(
+                              onPressed: () async {
+                                final saved = await Navigator.of(context).push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (context) => IntroFormScreen(
+                                      target: target,
+                                      repository: repository,
+                                      profile: profile!,
+                                    ),
+                                  ),
+                                );
+                                if (saved == true || saved == null) onChanged();
+                              },
+                              child: const Text('Request introduction'),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: () async {
+                                final ownerId = await _pickOwner(context, repository, target.ownerId);
+                                if (ownerId == null) return;
+                                await repository.assignTargetOwner(
+                                  targetId: target.id,
+                                  ownerId: ownerId.isEmpty ? null : ownerId,
+                                );
+                                onChanged();
+                              },
+                              child: const Text('Assign owner'),
+                            ),
+                          ],
                         ]),
                       ),
                   ],
@@ -296,9 +382,19 @@ class _PipelineTab extends StatelessWidget {
 }
 
 class _CalendarTab extends StatelessWidget {
-  const _CalendarTab({required this.workspace});
+  const _CalendarTab({
+    required this.campaign,
+    required this.workspace,
+    required this.repository,
+    required this.profile,
+    required this.onChanged,
+  });
 
+  final Campaign campaign;
   final CampaignWorkspace workspace;
+  final CampaignsRepository repository;
+  final SignedInProfile? profile;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -319,6 +415,22 @@ class _CalendarTab extends StatelessWidget {
               children: [
                 _ListPane(
                   empty: 'No availability windows yet.',
+                  actionLabel: profile != null ? 'Add window' : null,
+                  onAction: profile == null
+                      ? null
+                      : () async {
+                          final saved = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (context) => AvailabilityFormScreen(
+                                campaignId: campaign.id,
+                                timezone: campaign.timezone,
+                                repository: repository,
+                                profile: profile!,
+                              ),
+                            ),
+                          );
+                          if (saved == true) onChanged();
+                        },
                   children: [
                     for (final window in workspace.windows)
                       EntityRow(
@@ -341,6 +453,7 @@ class _CalendarTab extends StatelessWidget {
                         subtitle: [
                           if (meeting.companyName != null) meeting.companyName!,
                           if (meeting.startAt != null) formatTimestamp(DateTime.tryParse(meeting.startAt!)),
+                          if (meeting.ownerName != null) meeting.ownerName!,
                         ].join(' · '),
                         trailing: StatusChip(
                           label: labelFor(meetingStatusLabels, meeting.status),
@@ -359,6 +472,65 @@ class _CalendarTab extends StatelessWidget {
                           ('Owner', meeting.ownerName ?? 'Unassigned'),
                           ('Outcome', meeting.outcome == null ? 'Missing' : humanize(meeting.outcome!)),
                           ('Notes', meeting.schedulingNotes ?? 'None'),
+                        ], actions: [
+                          if (profile != null) ...[
+                            FilledButton(
+                              onPressed: () async {
+                                final saved = await Navigator.of(context).push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (context) => OutcomeScreen(
+                                      meeting: meeting,
+                                      repository: repository,
+                                      profile: profile!,
+                                    ),
+                                  ),
+                                );
+                                if (saved == true) {
+                                  if (context.mounted) Navigator.of(context).pop();
+                                  onChanged();
+                                }
+                              },
+                              child: const Text('Record outcome'),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (profile?.isAdmin == true) ...[
+                            OutlinedButton(
+                              onPressed: () async {
+                                await repository.setMeetingStatus(
+                                  meetingId: meeting.id,
+                                  status: 'confirmed',
+                                  confirmationStatus: 'confirmed',
+                                );
+                                if (context.mounted) Navigator.of(context).pop();
+                                onChanged();
+                              },
+                              child: const Text('Confirm meeting'),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: () async {
+                                final ownerId = await _pickOwner(context, repository, meeting.ownerId);
+                                if (ownerId == null) return;
+                                await repository.assignMeetingOwner(
+                                  meetingId: meeting.id,
+                                  ownerId: ownerId.isEmpty ? null : ownerId,
+                                );
+                                if (context.mounted) Navigator.of(context).pop();
+                                onChanged();
+                              },
+                              child: const Text('Assign owner'),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: () async {
+                                await repository.setMeetingStatus(meetingId: meeting.id, status: 'canceled');
+                                if (context.mounted) Navigator.of(context).pop();
+                                onChanged();
+                              },
+                              child: const Text('Cancel meeting'),
+                            ),
+                          ],
                         ]),
                       ),
                   ],
@@ -373,9 +545,19 @@ class _CalendarTab extends StatelessWidget {
 }
 
 class _ResultsTab extends StatelessWidget {
-  const _ResultsTab({required this.workspace});
+  const _ResultsTab({
+    required this.campaign,
+    required this.workspace,
+    required this.repository,
+    required this.profile,
+    required this.onChanged,
+  });
 
+  final Campaign campaign;
   final CampaignWorkspace workspace;
+  final CampaignsRepository repository;
+  final SignedInProfile? profile;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -397,6 +579,22 @@ class _ResultsTab extends StatelessWidget {
               children: [
                 _ListPane(
                   empty: 'No follow-up tasks yet.',
+                  actionLabel: profile?.isAdmin == true ? 'New task' : null,
+                  onAction: profile?.isAdmin == true
+                      ? () async {
+                          final saved = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (context) => TaskFormScreen(
+                                campaignId: campaign.id,
+                                repository: repository,
+                                profile: profile!,
+                                targets: workspace.targets,
+                              ),
+                            ),
+                          );
+                          if (saved == true) onChanged();
+                        }
+                      : null,
                   children: [
                     for (final task in workspace.tasks)
                       EntityRow(
@@ -415,6 +613,46 @@ class _ResultsTab extends StatelessWidget {
                           ('Target', task.targetPersonName ?? 'Not set'),
                           ('Company', task.companyName ?? 'Not set'),
                           ('Description', task.description ?? 'None'),
+                        ], actions: [
+                          if (profile != null) ...[
+                            for (final status in ['open', 'in_progress', 'waiting', 'completed', if (profile!.isAdmin) 'canceled'])
+                              if (status != task.status) ...[
+                                OutlinedButton(
+                                  onPressed: () async {
+                                    await repository.updateTaskStatus(
+                                      taskId: task.id,
+                                      status: status,
+                                      isAdmin: profile!.isAdmin,
+                                    );
+                                    if (context.mounted) Navigator.of(context).pop();
+                                    onChanged();
+                                  },
+                                  child: Text('Mark ${labelFor(taskStatusLabels, status).toLowerCase()}'),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                          ],
+                          if (profile?.isAdmin == true)
+                            FilledButton(
+                              onPressed: () async {
+                                final saved = await Navigator.of(context).push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (context) => TaskFormScreen(
+                                      campaignId: campaign.id,
+                                      repository: repository,
+                                      profile: profile!,
+                                      targets: workspace.targets,
+                                      existing: task,
+                                    ),
+                                  ),
+                                );
+                                if (saved == true) {
+                                  if (context.mounted) Navigator.of(context).pop();
+                                  onChanged();
+                                }
+                              },
+                              child: const Text('Edit task'),
+                            ),
                         ]),
                       ),
                   ],
@@ -475,21 +713,36 @@ class _ResultsTab extends StatelessWidget {
 }
 
 class _ListPane extends StatelessWidget {
-  const _ListPane({required this.empty, required this.children});
+  const _ListPane({required this.empty, required this.children, this.actionLabel, this.onAction});
 
   final String empty;
   final List<Widget> children;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    if (children.isEmpty) {
-      return ListView(padding: const EdgeInsets.all(16), children: [EmptyHint(empty)]);
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      itemCount: children.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) => children[index],
+    return Column(
+      children: [
+        if (actionLabel != null && onAction != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+              child: TextButton(onPressed: onAction, child: Text(actionLabel!)),
+            ),
+          ),
+        Expanded(
+          child: children.isEmpty
+              ? ListView(padding: const EdgeInsets.all(16), children: [EmptyHint(empty)])
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                  itemCount: children.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) => children[index],
+                ),
+        ),
+      ],
     );
   }
 }
@@ -545,8 +798,37 @@ class _Field extends StatelessWidget {
   }
 }
 
-void _open(BuildContext context, String title, List<(String, String)> fields) {
+void _open(BuildContext context, String title, List<(String, String)> fields, {List<Widget> actions = const []}) {
   Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (context) => DetailFieldsScreen(title: title, fields: fields)),
+    MaterialPageRoute<void>(builder: (context) => DetailFieldsScreen(title: title, fields: fields, actions: actions)),
+  );
+}
+
+Future<String?> _pickOwner(BuildContext context, CampaignsRepository repository, String? currentId) async {
+  final owners = await repository.listOwners();
+  if (!context.mounted) return null;
+  return showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: AppColors.card,
+    builder: (context) {
+      return SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const ListTile(title: Text('Assign owner', style: TextStyle(fontWeight: FontWeight.w700))),
+            ListTile(
+              title: const Text('Unassigned'),
+              onTap: () => Navigator.of(context).pop(''),
+            ),
+            for (final owner in owners)
+              ListTile(
+                title: Text(owner.name),
+                selected: owner.memberId == currentId,
+                onTap: () => Navigator.of(context).pop(owner.memberId),
+              ),
+          ],
+        ),
+      );
+    },
   );
 }

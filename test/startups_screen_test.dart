@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:modsquad_meetings/startups/startups_screen.dart';
 import 'package:modsquad_meetings/theme/app_theme.dart';
 
-import 'support/fake_auth_repository.dart';
 import 'support/fake_startups_repository.dart';
 
 void main() {
@@ -17,7 +16,6 @@ void main() {
       MaterialApp(
         theme: buildAppTheme(),
         home: StartupsScreen(
-          auth: FakeAuthRepository(),
           repository: FakeStartupsRepository(startups: const [sampleStartup]),
         ),
       ),
@@ -45,7 +43,6 @@ void main() {
       MaterialApp(
         theme: buildAppTheme(),
         home: StartupsScreen(
-          auth: FakeAuthRepository(),
           repository: FakeStartupsRepository(),
         ),
       ),

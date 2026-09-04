@@ -12,6 +12,33 @@ class FakeStartupsRepository implements StartupsRepository {
     if (thrown != null) throw thrown;
     return startups;
   }
+
+  @override
+  Future<Startup> createStartup({
+    required String name,
+    String? website,
+    String? shortDescription,
+    required String orgId,
+    required String userId,
+  }) async {
+    final thrown = error;
+    if (thrown != null) throw thrown;
+    final startup = Startup(
+      id: 's-${startups.length + 1}',
+      name: name,
+      shortDescription: shortDescription,
+      website: website,
+      demoUrl: null,
+      pitchDeckUrl: null,
+      elevatorPitch: null,
+      idealCustomerProfile: null,
+      meetingObjectives: const [],
+      targetPersonas: const [],
+      isPlaceholderContent: true,
+    );
+    startups = [...startups, startup];
+    return startup;
+  }
 }
 
 const sampleStartup = Startup(

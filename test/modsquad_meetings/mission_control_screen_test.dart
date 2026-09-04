@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:modsquad_meetings/auth/auth_repository.dart';
 import 'package:modsquad_meetings/mission_control/mission_control_screen.dart';
 import 'package:modsquad_meetings/theme/app_theme.dart';
 
-import 'support/fake_auth_repository.dart';
 import 'support/fake_mission_control_repository.dart';
 
 void main() {
@@ -14,10 +12,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final auth = FakeAuthRepository();
-    await auth.signIn(email: 'priya.natarajan@modsquad-demo.test', password: 'x');
-
-    await tester.pumpWidget(_app(auth, FakeMissionControlRepository(snapshot: sampleSnapshot())));
+    await tester.pumpWidget(_app(FakeMissionControlRepository(snapshot: sampleSnapshot())));
     await tester.pumpAndSettle();
 
     expect(find.text('Mission Control'), findsOneWidget);
@@ -32,7 +27,7 @@ void main() {
   });
 
   testWidgets('shows empty state when there are no campaigns', (tester) async {
-    await tester.pumpWidget(_app(FakeAuthRepository(), FakeMissionControlRepository()));
+    await tester.pumpWidget(_app(FakeMissionControlRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('No campaigns yet'), findsOneWidget);
@@ -40,7 +35,7 @@ void main() {
 
   testWidgets('shows an error and retries', (tester) async {
     final repo = FakeMissionControlRepository(error: Exception('network down'));
-    await tester.pumpWidget(_app(FakeAuthRepository(), repo));
+    await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
 
     expect(find.text('Could not load Mission Control'), findsOneWidget);
@@ -56,9 +51,9 @@ void main() {
   });
 }
 
-Widget _app(AuthRepository auth, FakeMissionControlRepository repository) {
+Widget _app(FakeMissionControlRepository repository) {
   return MaterialApp(
     theme: buildAppTheme(),
-    home: MissionControlScreen(auth: auth, repository: repository),
+    home: MissionControlScreen(repository: repository),
   );
 }

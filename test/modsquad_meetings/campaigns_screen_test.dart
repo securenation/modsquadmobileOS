@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:modsquad_meetings/campaigns/campaigns_screen.dart';
 import 'package:modsquad_meetings/theme/app_theme.dart';
 
-import 'support/fake_auth_repository.dart';
 import 'support/fake_campaigns_repository.dart';
 
 void main() {
@@ -17,7 +16,6 @@ void main() {
       MaterialApp(
         theme: buildAppTheme(),
         home: CampaignsScreen(
-          auth: FakeAuthRepository(),
           repository: FakeCampaignsRepository(campaigns: [sampleCampaign()], workspace: sampleWorkspace),
         ),
       ),
@@ -66,7 +64,6 @@ void main() {
       MaterialApp(
         theme: buildAppTheme(),
         home: CampaignsScreen(
-          auth: FakeAuthRepository(),
           repository: FakeCampaignsRepository(),
         ),
       ),

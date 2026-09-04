@@ -14,6 +14,8 @@ class CampaignTarget {
     required this.companyName,
     required this.tags,
     required this.doNotContact,
+    this.ownerId,
+    this.ownerName,
   });
 
   final String id;
@@ -30,6 +32,8 @@ class CampaignTarget {
   final String? companyName;
   final List<String> tags;
   final bool doNotContact;
+  final String? ownerId;
+  final String? ownerName;
 }
 
 class CampaignCompany {
@@ -128,6 +132,8 @@ class CampaignMeeting {
     required this.outcome,
     required this.ownerName,
     required this.schedulingNotes,
+    this.ownerId,
+    this.campaignTargetId,
   });
 
   final String id;
@@ -142,6 +148,8 @@ class CampaignMeeting {
   final String? outcome;
   final String? ownerName;
   final String? schedulingNotes;
+  final String? ownerId;
+  final String? campaignTargetId;
 }
 
 class CampaignTask {
@@ -155,6 +163,8 @@ class CampaignTask {
     required this.ownerName,
     required this.targetPersonName,
     required this.companyName,
+    this.ownerId,
+    this.campaignTargetId,
   });
 
   final String id;
@@ -166,6 +176,8 @@ class CampaignTask {
   final String? ownerName;
   final String? targetPersonName;
   final String? companyName;
+  final String? ownerId;
+  final String? campaignTargetId;
 }
 
 class CampaignOpportunity {

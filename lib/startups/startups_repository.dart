@@ -28,4 +28,11 @@ class Startup {
 
 abstract class StartupsRepository {
   Future<List<Startup>> listStartups();
+  Future<Startup> createStartup({
+    required String name,
+    String? website,
+    String? shortDescription,
+    required String orgId,
+    required String userId,
+  });
 }

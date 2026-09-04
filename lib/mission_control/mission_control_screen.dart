@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:modsquad_meetings/auth/auth_repository.dart';
+import 'package:modsquad_meetings/layout/page_app_bar.dart';
 import 'package:modsquad_meetings/mission_control/mission_control_repository.dart';
 import 'package:modsquad_meetings/mission_control/models.dart';
 import 'package:modsquad_meetings/shared/campaign_status_chip.dart';
@@ -9,11 +9,9 @@ import 'package:modsquad_meetings/theme/app_colors.dart';
 class MissionControlScreen extends StatefulWidget {
   const MissionControlScreen({
     super.key,
-    required this.auth,
     required this.repository,
   });
 
-  final AuthRepository auth;
   final MissionControlRepository repository;
 
   @override
@@ -40,27 +38,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.ink,
-        foregroundColor: AppColors.foreground,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Mission Control', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.muted),
-            color: AppColors.card,
-            onSelected: (value) {
-              if (value == 'sign-out') widget.auth.signOut();
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'sign-out',
-                child: Text(widget.auth.currentEmail == null ? 'Sign out' : 'Sign out · ${widget.auth.currentEmail}'),
-              ),
-            ],
-          ),
-        ],
-      ),
+      appBar: const PageAppBar(title: 'Mission Control'),
       body: FutureBuilder<MissionControlSnapshot?>(
         future: _future,
         builder: (context, snapshot) {
@@ -87,7 +65,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
             backgroundColor: AppColors.card,
             onRefresh: _reload,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
               children: [
                 _CampaignHeader(data: data),
                 const SizedBox(height: 16),
@@ -156,50 +134,58 @@ class _KpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.55,
+    final cards = [
+      _KpiCard(
+        label: 'Countdown',
+        value: data.daysUntilStart == null ? 'TBD' : '${data.daysUntilStart}d',
+      ),
+      _KpiCard(
+        label: 'Meetings today',
+        value: '${data.meetings.today}',
+        valueColor: AppColors.cyan,
+      ),
+      _KpiCard(
+        label: 'Confirmed',
+        value: '${data.meetings.confirmed}',
+        valueColor: AppColors.success,
+      ),
+      _KpiCard(
+        label: 'Opportunities',
+        value: '${data.opportunitiesCreated}',
+        valueColor: AppColors.success,
+      ),
+      _KpiCard(
+        label: 'Qualified targets',
+        value: '${data.targets.qualified}',
+      ),
+      _KpiCard(
+        label: 'High priority',
+        value: '${data.targets.highPriority}',
+      ),
+      _KpiCard(
+        label: 'Meeting goal',
+        value: data.targetGoal?.toString() ?? 'Not set',
+      ),
+      _KpiCard(
+        label: 'Missing outcome',
+        value: '${data.meetings.completedMissingOutcome}',
+        valueColor: data.meetings.completedMissingOutcome > 0 ? AppColors.destructive : null,
+      ),
+    ];
+
+    return Column(
       children: [
-        _KpiCard(
-          label: 'Countdown',
-          value: data.daysUntilStart == null ? 'TBD' : '${data.daysUntilStart}d',
-        ),
-        _KpiCard(
-          label: 'Meetings today',
-          value: '${data.meetings.today}',
-          valueColor: AppColors.cyan,
-        ),
-        _KpiCard(
-          label: 'Confirmed',
-          value: '${data.meetings.confirmed}',
-          valueColor: AppColors.success,
-        ),
-        _KpiCard(
-          label: 'Opportunities',
-          value: '${data.opportunitiesCreated}',
-          valueColor: AppColors.success,
-        ),
-        _KpiCard(
-          label: 'Qualified targets',
-          value: '${data.targets.qualified}',
-        ),
-        _KpiCard(
-          label: 'High priority',
-          value: '${data.targets.highPriority}',
-        ),
-        _KpiCard(
-          label: 'Meeting goal',
-          value: data.targetGoal?.toString() ?? 'Not set',
-        ),
-        _KpiCard(
-          label: 'Missing outcome',
-          value: '${data.meetings.completedMissingOutcome}',
-          valueColor: data.meetings.completedMissingOutcome > 0 ? AppColors.destructive : null,
-        ),
+        for (var i = 0; i < cards.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(bottom: i + 2 < cards.length ? 8 : 0),
+            child: Row(
+              children: [
+                Expanded(child: cards[i]),
+                const SizedBox(width: 8),
+                Expanded(child: cards[i + 1]),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -221,27 +207,28 @@ class _KpiCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               label.toUpperCase(),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.muted,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.6,
+                letterSpacing: 0.5,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
                 color: valueColor ?? AppColors.foreground,
-                fontSize: 26,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 height: 1,
                 fontFeatures: const [FontFeature.tabularFigures()],

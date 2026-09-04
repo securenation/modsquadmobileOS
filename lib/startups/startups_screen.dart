@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:modsquad_meetings/auth/auth_repository.dart';
+import 'package:modsquad_meetings/auth/signed_in_profile.dart';
+import 'package:modsquad_meetings/layout/page_app_bar.dart';
 import 'package:modsquad_meetings/shared/message_state.dart';
+import 'package:modsquad_meetings/startups/new_startup_screen.dart';
 import 'package:modsquad_meetings/startups/startup_detail_screen.dart';
 import 'package:modsquad_meetings/startups/startups_repository.dart';
 import 'package:modsquad_meetings/theme/app_colors.dart';
@@ -8,12 +10,12 @@ import 'package:modsquad_meetings/theme/app_colors.dart';
 class StartupsScreen extends StatefulWidget {
   const StartupsScreen({
     super.key,
-    required this.auth,
     required this.repository,
+    this.profile,
   });
 
-  final AuthRepository auth;
   final StartupsRepository repository;
+  final SignedInProfile? profile;
 
   @override
   State<StartupsScreen> createState() => _StartupsScreenState();
@@ -38,26 +40,24 @@ class _StartupsScreenState extends State<StartupsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final canCreate = widget.profile?.isAdmin == true;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.ink,
-        foregroundColor: AppColors.foreground,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Startups', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+      appBar: PageAppBar(
+        title: 'Startups',
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.muted),
-            color: AppColors.card,
-            onSelected: (value) {
-              if (value == 'sign-out') widget.auth.signOut();
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'sign-out',
-                child: Text(widget.auth.currentEmail == null ? 'Sign out' : 'Sign out · ${widget.auth.currentEmail}'),
-              ),
-            ],
-          ),
+          if (canCreate)
+            IconButton(
+              tooltip: 'New startup',
+              onPressed: () async {
+                final created = await Navigator.of(context).push<Startup>(
+                  MaterialPageRoute(
+                    builder: (context) => NewStartupScreen(repository: widget.repository, profile: widget.profile!),
+                  ),
+                );
+                if (created != null) await _reload();
+              },
+              icon: const Icon(Icons.add, color: AppColors.cyan),
+            ),
         ],
       ),
       body: FutureBuilder<List<Startup>>(
@@ -86,7 +86,7 @@ class _StartupsScreenState extends State<StartupsScreen> {
             backgroundColor: AppColors.card,
             onRefresh: _reload,
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
               itemCount: startups.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {

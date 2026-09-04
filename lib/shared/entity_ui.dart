@@ -6,10 +6,12 @@ class DetailFieldsScreen extends StatelessWidget {
     super.key,
     required this.title,
     required this.fields,
+    this.actions = const [],
   });
 
   final String title;
   final List<(String, String)> fields;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +52,10 @@ class DetailFieldsScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...actions,
+          ],
         ],
       ),
     );
